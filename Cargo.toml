@@ -1,0 +1,8 @@
+[package]
+name = "paprika"
+version = "0.1.0"
+authors = ["tak0"]
+edition = "2018"
+
+[dependencies]
+regex = "*"
