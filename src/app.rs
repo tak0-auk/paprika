@@ -15,6 +15,7 @@ pub struct Ops {
     long: String,
     description: String,
     takes_value: bool,
+    is_exist: bool,
     value: String,
     is_only: bool,
 }
@@ -31,16 +32,8 @@ impl App {
         }
     }
 
-    pub fn exec(self) {
-        for arg in &self.args {
-            if arg.starts_with(&self.prefix) {
-                for o in &self.ops {
-                    if o.short == arg.trim_start_matches(&self.prefix) {
-                        println!("has {}", arg);
-                    }
-                }
-            }
-        }
+    pub fn exec(&mut self) {
+        self.parse();
     }
 
     pub fn add_ops(&mut self, ops: Ops) {
@@ -48,7 +41,10 @@ impl App {
     }
 
     pub fn has_ops(&self, s: &str) -> bool {
-        false
+        match self.ops.iter().find(|o| o.is_exist && o.short == s) {
+            Some(_) => true,
+            None => false,
+        }
     }
 
     pub fn get_value(&self, ops: &str) -> String {
@@ -65,10 +61,15 @@ impl App {
 
 impl App {
 
-    fn parse(self) {
-        let args: Vec<String> = env::args().collect();
-        for arg in args {
-            println!("{}", arg);
+    fn parse(&mut self) {
+        for arg in &self.args {
+            if arg.starts_with(&self.prefix) {
+                for o in &mut self.ops {
+                    if o.short == arg.trim_start_matches(&self.prefix) {
+                        o.is_exist = true;
+                    }
+                }
+            }
         }
     }
 }
@@ -80,6 +81,7 @@ impl Ops {
             long: String::default(),
             description: String::default(),
             takes_value: false,
+            is_exist: false,
             value: String::default(),
             is_only: false
         }
@@ -119,10 +121,11 @@ mod test {
     #[test]
     fn has_short_flag() {
         let mut app = App::new();
+        app.args = vec!["-v".to_string()];
         let ver = Ops::new()
                 .short("v");
         app.add_ops(ver);
-
+        app.exec();
         assert!(app.has_ops("v"));
     }
 
