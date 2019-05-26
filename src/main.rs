@@ -14,8 +14,12 @@ fn main() {
                 .short("h")
                 .description("Prints help information")
                 .only(true);
+    let xms = Ops::new()
+                .short("Xms")
+                .takes_value(true);
     app.add_ops(ver);
     app.add_ops(help);
+    app.add_ops(xms);
 
     app.exec();
 

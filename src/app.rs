@@ -14,7 +14,7 @@ pub struct Ops {
     short: String,
     long: String,
     description: String,
-    take_value: bool,
+    takes_value: bool,
     value: String,
     is_only: bool,
 }
@@ -47,6 +47,14 @@ impl App {
         self.ops.push(ops);
     }
 
+    pub fn has_ops(&self, s: &str) -> bool {
+        false
+    }
+
+    pub fn get_value(&self, ops: &str) -> String {
+        panic!("unimplemented")
+    }
+
     pub fn print(&self) {
         println!("{}", self.about);
         for o in &self.ops {
@@ -71,7 +79,7 @@ impl Ops {
             short: String::default(),
             long: String::default(),
             description: String::default(),
-            take_value: false,
+            takes_value: false,
             value: String::default(),
             is_only: false
         }
@@ -92,8 +100,36 @@ impl Ops {
         self
     }
 
+    pub fn takes_value(mut self, is_takes: bool) -> Self {
+        self.takes_value = is_takes;
+        self
+    }
+
     pub fn only(mut self, only: bool) -> Self {
         self.is_only = only;
         self
     }
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn has_short_flag() {
+        let mut app = App::new();
+        let ver = Ops::new()
+                .short("v");
+        app.add_ops(ver);
+
+        assert!(app.has_ops("v"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_ops_value() {
+        unimplemented!();
+    }
+
 }
