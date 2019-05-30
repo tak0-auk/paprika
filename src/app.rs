@@ -2,6 +2,7 @@ use std::env;
 
 use crate::parser::parse_arg;
 
+#[derive(Default)]
 pub struct App {
     args: Vec<String>,
     ops: Vec<Ops>,
@@ -10,6 +11,7 @@ pub struct App {
     conjunction: String,
 }
 
+#[derive(Default)]
 pub struct Ops {
     short: String,
     long: String,
@@ -41,14 +43,11 @@ impl App {
     }
 
     pub fn has_ops(&self, s: &str) -> bool {
-        match self.ops.iter().find(|o| o.is_exist && o.short == s) {
-            Some(_) => true,
-            None => false,
-        }
+        self.ops.iter().any(|o| o.is_exist && (o.short == s || o.long == s))
     }
 
     pub fn get_value(&self, ops: &str) -> String {
-        panic!("unimplemented")
+        self.get_ops(ops).value.clone()
     }
 
     pub fn print(&self) {
@@ -62,14 +61,28 @@ impl App {
 impl App {
 
     fn parse(&mut self) {
+        let lf = format!("{}{}", self.prefix, self.prefix);
         for arg in &self.args {
-            if arg.starts_with(&self.prefix) {
-                for o in &mut self.ops {
-                    if o.short == arg.trim_start_matches(&self.prefix) {
+            if arg.starts_with(&lf) || arg.starts_with(&self.prefix) {
+                for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
+                    let s = arg.trim_start_matches(&self.prefix);
+                    let sp = s.split(&self.conjunction);
+                    println!("{:?}", sp);
+                    if o.short == s || o.long == s {
                         o.is_exist = true;
+                        if o.takes_value {
+                            println!("{} takes value", arg);
+                        }
                     }
                 }
             }
+        }
+    }
+
+    fn get_ops(&self, name: &str) -> &Ops {
+        match self.ops.iter().find(|o| o.is_exist && (o.short == name || o.long == name)) {
+            Some(o) => o,
+            None => panic!("Option not found"),
         }
     }
 }
@@ -130,8 +143,31 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    fn has_long_flag() {
+        let mut app = App::new();
+        app.args = vec!["--help".to_string()];
+        let ver = Ops::new()
+                .long("help");
+        app.add_ops(ver);
+        app.exec();
+        assert!(app.has_ops("help"));
+    }
+
+    #[test]
     fn get_ops_value() {
+        let mut app = App::new();
+        app.args = vec!["-Xms=-4096".to_string()];
+        let ver = Ops::new()
+                    .short("Xms")
+                    .takes_value(true);
+        app.add_ops(ver);
+        app.exec();
+        assert_eq!(app.get_value("Xms"), "4096");
+    }
+
+    #[test]
+    #[should_panic]
+    fn app_panic() {
         unimplemented!();
     }
 
