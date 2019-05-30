@@ -66,12 +66,12 @@ impl App {
             if arg.starts_with(&lf) || arg.starts_with(&self.prefix) {
                 for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
                     let s = arg.trim_start_matches(&self.prefix);
-                    let sp = s.split(&self.conjunction);
-                    println!("{:?}", sp);
-                    if o.short == s || o.long == s {
+                    let sp: Vec<&str> = s.split(&self.conjunction).collect();
+                    let name = sp[0];
+                    if o.short == name || o.long == name {
                         o.is_exist = true;
                         if o.takes_value {
-                            println!("{} takes value", arg);
+                            o.value = sp[1].to_string();
                         }
                     }
                 }
@@ -156,7 +156,7 @@ mod test {
     #[test]
     fn get_ops_value() {
         let mut app = App::new();
-        app.args = vec!["-Xms=-4096".to_string()];
+        app.args = vec!["-Xms=4096".to_string()];
         let ver = Ops::new()
                     .short("Xms")
                     .takes_value(true);
