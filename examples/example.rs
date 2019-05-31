@@ -15,7 +15,7 @@ fn main() {
                 .only(true);
     app.add_ops(ver);
     app.add_ops(help);
-    
+
     app.exec();
 
 }
