@@ -21,6 +21,6 @@ fn main() {
     app.add_ops(help);
     app.add_ops(xms);
 
-    app.exec();
+    app.parse();
 
 }

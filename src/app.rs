@@ -1,7 +1,5 @@
 use std::env;
 
-use crate::parser::parse_arg;
-
 #[derive(Default)]
 pub struct App {
     args: Vec<String>,
@@ -34,8 +32,23 @@ impl App {
         }
     }
 
-    pub fn exec(&mut self) {
-        self.parse();
+    pub fn parse(&mut self) {
+        let lf = format!("{}{}", self.prefix, self.prefix);
+        for arg in &self.args {
+            if arg.starts_with(&lf) || arg.starts_with(&self.prefix) {
+                for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
+                    let s = arg.trim_start_matches(&self.prefix);
+                    let sp: Vec<&str> = s.split(&self.conjunction).collect();
+                    let name = sp[0];
+                    if o.short == name || o.long == name {
+                        o.is_exist = true;
+                        if o.takes_value {
+                            o.value = sp[1].to_string();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn add_ops(&mut self, ops: Ops) {
@@ -59,25 +72,6 @@ impl App {
 }
 
 impl App {
-
-    fn parse(&mut self) {
-        let lf = format!("{}{}", self.prefix, self.prefix);
-        for arg in &self.args {
-            if arg.starts_with(&lf) || arg.starts_with(&self.prefix) {
-                for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
-                    let s = arg.trim_start_matches(&self.prefix);
-                    let sp: Vec<&str> = s.split(&self.conjunction).collect();
-                    let name = sp[0];
-                    if o.short == name || o.long == name {
-                        o.is_exist = true;
-                        if o.takes_value {
-                            o.value = sp[1].to_string();
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     fn get_ops(&self, name: &str) -> &Ops {
         match self.ops.iter().find(|o| o.is_exist && (o.short == name || o.long == name)) {
