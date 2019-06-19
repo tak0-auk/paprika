@@ -2,6 +2,7 @@ use std::env;
 
 #[derive(Default)]
 pub struct App {
+    app_path:String,
     args: Vec<String>,
     ops: Vec<Ops>,
     about: String,
@@ -23,8 +24,10 @@ pub struct Ops {
 impl App {
 
     pub fn new() -> App {
+        let a:Vec<String> = env::args().collect();
         App{
-            args: env::args().collect(),
+            app_path: a[0].clone(),
+            args: env::args().skip(1).collect(),
             ops: vec![],
             about: String::default(),
             prefix: String::from("-"),
@@ -33,19 +36,30 @@ impl App {
     }
 
     pub fn parse(&mut self) {
-        let lf = format!("{}{}", self.prefix, self.prefix);
+        let lp = format!("{}{}", self.prefix, self.prefix);
         for arg in &self.args {
-            if arg.starts_with(&lf) || arg.starts_with(&self.prefix) {
-                for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
-                    let s = arg.trim_start_matches(&self.prefix);
-                    let sp: Vec<&str> = s.split(&self.conjunction).collect();
-                    let name = sp[0];
-                    if o.short == name || o.long == name {
+            // let s = arg.trim_start_matches(&self.prefix);
+            let sp: Vec<&str> = arg.split(&self.conjunction).collect();
+            let name = sp[0];
+            for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
+                if arg.starts_with(&lp) {
+                    if o.long == name[2..] {
                         o.is_exist = true;
                         if o.takes_value {
                             o.value = sp[1].to_string();
                         }
                     }
+                    
+                }else if arg.starts_with(&self.prefix) {
+                // println!("{:?}", &arg[1..]);
+                    if o.short == name[1..] {
+                        o.is_exist = true;
+                        if o.takes_value {
+                            o.value = sp[1].to_string();
+                        }
+                    }
+                }else {
+                    println!("{}", arg);
                 }
             }
         }
@@ -66,7 +80,14 @@ impl App {
     pub fn print(&self) {
         println!("{}", self.about);
         for o in &self.ops {
-            println!("\t-{} --{}\t\t{}", o.short, o.long, o.description);
+            print!("\t");
+            if !o.short.is_empty() {
+                print!("-{}  ", o.short);
+            }
+            if !o.long.is_empty() {
+                print!("--{}", o.long);
+            }
+            println!("\t\t{}", o.description);
         }
     }
 }
@@ -132,7 +153,7 @@ mod test {
         let ver = Ops::new()
                 .short("v");
         app.add_ops(ver);
-        app.exec();
+        app.parse();
         assert!(app.has_ops("v"));
     }
 
@@ -143,7 +164,7 @@ mod test {
         let ver = Ops::new()
                 .long("help");
         app.add_ops(ver);
-        app.exec();
+        app.parse();
         assert!(app.has_ops("help"));
     }
 
@@ -155,7 +176,7 @@ mod test {
                     .short("Xms")
                     .takes_value(true);
         app.add_ops(ver);
-        app.exec();
+        app.parse();
         assert_eq!(app.get_value("Xms"), "4096");
     }
 
