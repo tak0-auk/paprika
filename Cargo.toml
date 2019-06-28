@@ -1,7 +1,10 @@
 [package]
 name = "paprika"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["takashima<tak0auk@gmail.com>"]
+repository = "https://github.com/tak0-auk/paprika"
 edition = "2018"
+license-file = "LICENSE"
+keywords = ["command"]
 
 [dependencies]

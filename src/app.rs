@@ -38,7 +38,6 @@ impl App {
     pub fn parse(&mut self) {
         let lp = format!("{}{}", self.prefix, self.prefix);
         for arg in &self.args {
-            // let s = arg.trim_start_matches(&self.prefix);
             let sp: Vec<&str> = arg.split(&self.conjunction).collect();
             let name = sp[0];
             for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
@@ -51,7 +50,6 @@ impl App {
                     }
                     
                 }else if arg.starts_with(&self.prefix) {
-                // println!("{:?}", &arg[1..]);
                     if o.short == name[1..] {
                         o.is_exist = true;
                         if o.takes_value {
