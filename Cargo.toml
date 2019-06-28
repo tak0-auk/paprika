@@ -4,6 +4,7 @@ version = "0.0.1"
 authors = ["takashima<tak0auk@gmail.com>"]
 repository = "https://github.com/tak0-auk/paprika"
 edition = "2018"
+license = "MIT"
 license-file = "LICENSE"
 description = "Paprika is a command line parser"
 keywords = ["command"]
