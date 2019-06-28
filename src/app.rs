@@ -5,6 +5,7 @@ pub struct App {
     app_path:String,
     args: Vec<String>,
     ops: Vec<Ops>,
+    values: Vec<Value>,
     about: String,
     prefix: String,
     conjunction: String,
@@ -21,6 +22,21 @@ pub struct Ops {
     is_only: bool,
 }
 
+#[derive(Default)]
+pub struct Value {
+    pos: u16,
+    value: String,
+}
+
+impl Value {
+    fn new() -> Value {
+        Value {
+            pos: 0,
+            value: String::default()
+        }
+    }
+}
+
 impl App {
 
     pub fn new() -> App {
@@ -29,6 +45,7 @@ impl App {
             app_path: a[0].clone(),
             args: env::args().skip(1).collect(),
             ops: vec![],
+            values: vec![],
             about: String::default(),
             prefix: String::from("-"),
             conjunction: String::from("=")
@@ -57,7 +74,7 @@ impl App {
                         }
                     }
                 }else {
-                    println!("{}", arg);
+                    self.values.push(Value {pos:0, value:arg.to_string()})
                 }
             }
         }
