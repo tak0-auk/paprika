@@ -2,7 +2,7 @@ use std::env;
 
 #[derive(Default)]
 pub struct App {
-    app_path:String,
+    app_path: String,
     args: Vec<String>,
     ops: Vec<Ops>,
     values: Vec<Value>,
@@ -16,25 +16,17 @@ pub struct Ops {
     short: String,
     long: String,
     description: String,
+    pos: usize,
+    value: String,
     takes_value: bool,
     is_exist: bool,
-    value: String,
     is_only: bool,
 }
 
 #[derive(Default)]
 pub struct Value {
-    pos: u16,
+    pos: usize,
     value: String,
-}
-
-impl Value {
-    fn new() -> Value {
-        Value {
-            pos: 0,
-            value: String::default()
-        }
-    }
 }
 
 impl App {
@@ -54,15 +46,16 @@ impl App {
 
     pub fn parse(&mut self) {
         let lp = format!("{}{}", self.prefix, self.prefix);
-        for arg in &self.args {
-            let sp: Vec<&str> = arg.split(&self.conjunction).collect();
-            let name = sp[0];
+        for (i, arg) in self.args.iter().enumerate() {
+            let flag_value: Vec<&str> = arg.split(&self.conjunction).collect();
+            let name = flag_value[0];
             for o in self.ops.iter_mut().filter(|p| !p.is_exist) {
                 if arg.starts_with(&lp) {
                     if o.long == name[2..] {
+                        o.pos = i;
                         o.is_exist = true;
                         if o.takes_value {
-                            o.value = sp[1].to_string();
+                            o.value = flag_value[1].to_string();
                         }
                     }
                     
@@ -70,11 +63,11 @@ impl App {
                     if o.short == name[1..] {
                         o.is_exist = true;
                         if o.takes_value {
-                            o.value = sp[1].to_string();
+                            o.value = flag_value[1].to_string();
                         }
                     }
                 }else {
-                    self.values.push(Value {pos:0, value:arg.to_string()})
+                    self.values.push(Value {pos:i, value:arg.to_string()})
                 }
             }
         }
@@ -90,6 +83,10 @@ impl App {
 
     pub fn get_value(&self, ops: &str) -> String {
         self.get_ops(ops).value.clone()
+    }
+
+    pub fn get_pos(&self, pos: u128) {
+        unimplemented!()
     }
 
     pub fn print(&self) {
@@ -123,9 +120,10 @@ impl Ops {
             short: String::default(),
             long: String::default(),
             description: String::default(),
+            pos: 0,
+            value: String::default(),
             takes_value: false,
             is_exist: false,
-            value: String::default(),
             is_only: false
         }
     }
@@ -156,14 +154,33 @@ impl Ops {
     }
 }
 
+impl Value {
+
+
+    pub fn new(p: usize, v: String) -> Value {
+        Value {
+            pos: p,
+            value: v
+        }
+    }
+
+}
+
 #[cfg(test)]
 mod test {
 
     use super::*;
 
+    fn setup() -> App {
+        let mut app = App::new();
+        app.args = vec!["-v".to_string()];
+
+        app
+    }
+
     #[test]
     fn has_short_flag() {
-        let mut app = App::new();
+        let mut app = setup();
         app.args = vec!["-v".to_string()];
         let ver = Ops::new()
                 .short("v");
@@ -193,6 +210,16 @@ mod test {
         app.add_ops(ver);
         app.parse();
         assert_eq!(app.get_value("Xms"), "4096");
+    }
+
+    #[test]
+    fn get_arg() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn next() {
+        unimplemented!();
     }
 
     #[test]
