@@ -6,6 +6,7 @@ repository = "https://github.com/tak0-auk/paprika"
 edition = "2018"
 license = "MIT"
 description = "Paprika is a command line parser"
+readme = "README.md"
 keywords = ["command"]
 
 [dependencies]
