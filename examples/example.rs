@@ -1,18 +1,18 @@
 extern crate paprika;
 use paprika::{App, Ops};
 
+use std::process;
+
 fn main() {
 
     let mut app = App::new();
     let ver = Ops::new()
                 .short("v")
                 .long("version")
-                .description("version")
-                .only(true);
+                .description("version");
     let help = Ops::new()
                 .short("h")
-                .description("Prints help information")
-                .only(true);
+                .description("Prints help information");
     let xms = Ops::new()
                 .long("Xms")
                 .takes_value(true);
@@ -21,13 +21,15 @@ fn main() {
     app.add_ops(xms);
 
     app.parse();
-    app.print();
     if app.has_ops("version") {
         println!("version {}", env!("CARGO_PKG_VERSION"));
+        process::exit(0);
     }
     if app.has_ops("Xms") {
-        let x = app.get_value("Xms");
-        println!("{}", x);
+        match app.get_value("Xms"){
+            Some(val) => println!("{}", val),
+            None => panic!()
+        }
     }
 
 }

@@ -8,12 +8,10 @@ fn main() {
     let ver = Ops::new()
                 .short("v")
                 .long("version")
-                .description("version")
-                .only(true);
+                .description("version");
     let help = Ops::new()
                 .short("h")
-                .description("Prints help information")
-                .only(true);
+                .description("Prints help information");
     let xms = Ops::new()
                 .short("Xms")
                 .takes_value(true);
