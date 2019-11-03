@@ -6,7 +6,6 @@ pub struct App {
     args: Vec<Arg>,
     ops: Vec<Ops>,
     about: String,
-    prefix: String,
     conjunction: String,
 }
 
@@ -20,8 +19,6 @@ pub struct Ops {
 
 #[derive(Default)]
 pub struct Arg {
-    pos: usize,
-    raw: String,
     ops_short: String,
     ops_long: String,
     value: Option<String>,
@@ -35,7 +32,6 @@ impl App {
             args: vec![],
             ops: vec![],
             about: String::default(),
-            prefix: String::from("-"),
             conjunction: String::from("=")
         }
     }
@@ -97,15 +93,13 @@ impl App {
     fn matcher(&self, e: Vec<String>) -> Vec<Arg> {
 
         let mut args: Vec<Arg> = vec![];
-        for (i, arg) in e.iter().enumerate() {
+        for (_i, arg) in e.iter().enumerate() {
             let (name, value) = self.separate_args(arg.clone());
             let ops = match self.find_ops(name) {
                 Some(o) => o,
                 None => continue
             };
             args.push(Arg {
-                    pos: i,
-                    raw: arg.to_string(),
                     ops_short: ops.short.clone(),
                     ops_long: ops.long.clone(),
                     value: value
@@ -183,8 +177,6 @@ mod test {
         let mut app = App::new();
         app.args = vec![
             Arg{
-                pos: 0,
-                raw: "--Xms=4096".to_string(),
                 ops_short: String::default(),
                 ops_long: "Xms".to_string(),
                 value: Some("4096".to_string())
