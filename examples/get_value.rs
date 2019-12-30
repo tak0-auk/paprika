@@ -1,8 +1,6 @@
 extern crate paprika;
 use paprika::{App, Ops};
 
-use std::process;
-
 fn main() {
 
     let mut app = App::new();
@@ -14,7 +12,7 @@ fn main() {
     app.parse();
     if app.has_ops("name") {
         match app.get_value("name"){
-            Some(val) => println!("Hello {}!!", val),
+            Some(val) => println!("Hello {}", val),
             None => panic!()
         }
     }

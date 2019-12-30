@@ -13,13 +13,11 @@ pub struct App {
 pub struct Ops {
     short: String,
     long: String,
-    description: String,
     takes_value: bool,
 }
 
 #[derive(Default)]
 pub struct Arg {
-    raw: String,
     ops: Option<Ops>,
     value: Option<String>,
 }
@@ -51,10 +49,14 @@ impl App {
     pub fn has_ops(&self, s: &str) -> bool {
         self.args.iter().any(|arg| 
             match &arg.ops {
-                Some(o) => &o.short == s || &o.long == s,
+                Some(o) => o.short == s || o.long == s,
                 None => false,
             }
         )
+    }
+
+    pub fn take_args(&self) -> bool {
+        self.args.len() >= 1
     }
 
     pub fn get_value(&self, ops: &str) -> Option<String> {
@@ -74,7 +76,6 @@ impl App {
             if !o.long.is_empty() {
                 print!("--{}", o.long);
             }
-            println!("\t\t{}", o.description);
         }
     }
 }
@@ -87,45 +88,56 @@ impl App {
         std::mem::swap(&mut self.ops, &mut current_ops);
         for (_i, arg) in cl_args.iter().enumerate() {
             let (is_ops, name, value) = self.separate_args(arg.clone());
+            let _arg: Arg;
             if is_ops {
-                match current_ops.iter().position(|o| o.short == name || o.long == name) {
-                    Some(i) => {
-                        args.push(
-                            Arg {
-                                raw:arg.to_string(),
-                                ops: Some(current_ops.remove(i)),
-                                value
-                            });
-                    },
-                    None => (),
+                if let Some(i) = current_ops.iter().position(|o| o.short == name || o.long == name) {
+                    println!("is ops {}", name);
+
+                    args.push(
+                        Arg {
+                            ops: Some(current_ops.remove(i)),
+                            value
+                        }
+                    );
                 };
-            }
+            } else {
+                args.push(Arg {
+                    ops: None,
+                    value: None
+                });
+            };
         }
 
         args
     }
 
     fn separate_args(&self, s: String) -> (bool, String, Option<String>) {
-        let v: Vec<&str> = s.split(&self.conjunction).collect();
+        let split_args: Vec<&str> = s.split(&self.conjunction).collect();
         let mut is_ops = false;
         let name: String;
-        let raw = v[0];
-        if raw.starts_with("--") {
+        let front = split_args[0];
+        if front.starts_with("-") {
             is_ops = true;
-            name = raw[2..].to_string();
-        } else if raw.starts_with('-') {
-            is_ops = true;
-            name = raw[1..].to_string();
+            if front.starts_with("--") {
+                name = front[2..].to_string();
+            } else {
+                name = front[1..].to_string();
+            }
+            let value = if split_args.len() > 1 {
+                Some(split_args[1].to_string())
+            } else {
+                None
+            };
+            (is_ops, name, value)
         } else {
-            name = raw.to_string();
+            name = s.clone();
+            (is_ops, name, None)
         }
-        let value = if v.len() > 1 { Some(v[1].to_string()) } else { None} ;
-        (is_ops, name, value)
     }
 
     fn find_args(&self, s: String) -> Option<&Arg> {
         self.args.iter().find(|&arg| match &arg.ops {
-            Some(o) => o.short == s,
+            Some(o) => o.short == s || o.long == s,
             None => false
         })
     }
@@ -136,7 +148,6 @@ impl Ops {
         Ops{
             short: String::default(),
             long: String::default(),
-            description: String::default(),
             takes_value: false
         }
     }
@@ -148,11 +159,6 @@ impl Ops {
 
     pub fn long(mut self, l: &str) -> Self {
         self.long = l.to_string();
-        self
-    }
-
-    pub fn description(mut self, desc: &str) -> Self {
-        self.description = desc.to_string();
         self
     }
 
@@ -173,17 +179,14 @@ mod test {
         let mut app = App::new();
         app.args = vec![
              Arg {
-                 raw: "-v".to_string(),
                  ops: Some(Ops::new().short("v").long("--version")),
                  value: None
              },
              Arg {
-                 raw: "-Xms".to_string(),
                  ops: Some(Ops::new().short("Xms").takes_value(true)),
                  value: Some("4096".to_string())
              },
              Arg {
-                 raw: "Foo".to_string(),
                  ops: None,
                  value: None
              }
@@ -195,7 +198,6 @@ mod test {
     fn has_ops() {
         let app = setup();
         assert!(app.has_ops("v"));
-        // assert!(app.has_ops("version"));
     }
 
 
@@ -203,7 +205,13 @@ mod test {
     fn get_value() {
         let app = setup();
         assert_eq!(app.get_value("Xms"), Some("4096".to_string()));
-        assert_eq!(app.get_value(""), None);
+    }
+
+    #[test]
+    fn ver() {
+        let mut app = App::new();
+        app.parse();
+       assert!(!app.take_args());
     }
 
 }
