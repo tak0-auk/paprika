@@ -91,8 +91,6 @@ impl App {
             let _arg: Arg;
             if is_ops {
                 if let Some(i) = current_ops.iter().position(|o| o.short == name || o.long == name) {
-                    println!("is ops {}", name);
-
                     args.push(
                         Arg {
                             ops: Some(current_ops.remove(i)),
