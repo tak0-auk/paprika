@@ -1,12 +1,12 @@
 [package]
 name = "paprika"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["takashima<tak0auk@gmail.com>"]
 repository = "https://github.com/tak0-auk/paprika"
 edition = "2018"
 license = "MIT"
 description = "Paprika is a command line parser"
 readme = "README.md"
-keywords = ["command"]
+keywords = ["command", "argument", "parser"]
 
 [dependencies]
