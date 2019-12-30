@@ -44,7 +44,3 @@ cargo run --example example -- -v
 ```
 cargo run --example get_value --  --name="YOUR NAME"
 ```
-
-Well, this is just killing time.
-
-By the way, I am not good at English. I would be very happy to tell if there are any strange grammars.
