@@ -6,7 +6,6 @@ pub struct App {
     args: Vec<Arg>,
     ops: Vec<Ops>,
     about: String,
-    conjunction: String,
 }
 
 #[derive(Default)]
@@ -14,12 +13,15 @@ pub struct Ops {
     short: String,
     long: String,
     takes_value: bool,
+    conjunction: Option<char>,
 }
 
 #[derive(Default)]
 pub struct Arg {
-    ops: Option<Ops>,
-    value: Option<String>,
+    raw:    String,
+    pos:    usize,
+    ops:    Option<Ops>,
+    value:  Option<String>,
 }
 
 impl App {
@@ -29,8 +31,7 @@ impl App {
             app_path: String::default(),
             args: vec![],
             ops: vec![],
-            about: String::default(),
-            conjunction: String::from("=")
+            about: String::default()
         }
     }
 
@@ -41,9 +42,9 @@ impl App {
     }
 
     pub fn parse(&mut self) {
-        let args: Vec<String> = env::args().collect();
-        self.app_path = args[0].clone();
-        self.args = self.matcher(args[1..].to_vec());
+        let arguments: Vec<String> = env::args().collect();
+        self.app_path = arguments[0].clone();
+        self.args = self.matcher(arguments[1..].to_vec());
     }
 
     pub fn has_ops(&self, s: &str) -> bool {
@@ -82,55 +83,60 @@ impl App {
 
 impl App {
 
-    fn matcher(&mut self, cl_args: Vec<String>) -> Vec<Arg> {
+    fn matcher(&mut self, arguments: Vec<String>) -> Vec<Arg> {
+        self.check_ops();
         let mut args: Vec<Arg> = vec![];
-        let mut current_ops: Vec<Ops> = vec![];
-        std::mem::swap(&mut self.ops, &mut current_ops);
-        for (_i, arg) in cl_args.iter().enumerate() {
-            let (is_ops, name, value) = self.separate_args(arg.clone());
-            let _arg: Arg;
-            if is_ops {
-                if let Some(i) = current_ops.iter().position(|o| o.short == name || o.long == name) {
-                    args.push(
-                        Arg {
-                            ops: Some(current_ops.remove(i)),
-                            value
-                        }
-                    );
-                };
+        for (i, arg) in arguments.iter().enumerate() {
+
+            if arg == "-" || arg == "--" {
+                args.push(
+                    Arg {
+                        raw: arg.to_string(),
+                        pos: i,
+                        ops: None,
+                        value: None,
+                    }
+                );
+                continue;
+            }
+
+            let foo = if arg.starts_with("--") {
+                arg[2..].to_string()
+            } else if arg.starts_with() {
+                arg[1..].to_string()
+            };
+
+            let n = if let Some(p) = self.ops.iter().position(|o| o.is_myself(&foo)) {
+                Arg {
+                    raw: arg.to_string(),
+                    pos: i,
+                    ops: Some(self.ops.remove(p)),
+                    value: self.extract_value(foo),
+                }
             } else {
-                args.push(Arg {
+                Arg {
+                    raw: arg.to_string(),
+                    pos: i,
                     ops: None,
                     value: None
-                });
+                }
             };
+
+            args.push(n);
+
         }
 
         args
     }
 
-    fn separate_args(&self, s: String) -> (bool, String, Option<String>) {
-        let split_args: Vec<&str> = s.split(&self.conjunction).collect();
-        let mut is_ops = false;
-        let name: String;
-        let front = split_args[0];
-        if front.starts_with("-") {
-            is_ops = true;
-            if front.starts_with("--") {
-                name = front[2..].to_string();
-            } else {
-                name = front[1..].to_string();
-            }
-            let value = if split_args.len() > 1 {
-                Some(split_args[1].to_string())
-            } else {
-                None
-            };
-            (is_ops, name, value)
-        } else {
-            name = s.clone();
-            (is_ops, name, None)
+    fn check_ops(&self) {
+        for ops in self.ops.iter() {
+            
         }
+    }
+
+    fn extract_value(&self, arg: String) -> Option<String> {
+        None
     }
 
     fn find_args(&self, s: String) -> Option<&Arg> {
@@ -146,7 +152,8 @@ impl Ops {
         Ops{
             short: String::default(),
             long: String::default(),
-            takes_value: false
+            takes_value: false,
+            conjunction: Some('='),
         }
     }
 
@@ -165,6 +172,10 @@ impl Ops {
         self
     }
 
+    fn is_myself(&self, s: &str) -> bool {
+        true
+    }
+
 }
 
 
@@ -175,41 +186,53 @@ mod test {
 
     fn setup() -> App {
         let mut app = App::new();
-        app.args = vec![
-             Arg {
-                 ops: Some(Ops::new().short("v").long("--version")),
-                 value: None
-             },
-             Arg {
-                 ops: Some(Ops::new().short("Xms").takes_value(true)),
-                 value: Some("4096".to_string())
-             },
-             Arg {
-                 ops: None,
-                 value: None
-             }
-        ];
+        app.matcher(vec![
+            "-v".to_string(),
+            "-Xms4096".to_string(),
+            "--FILE=example.txt".to_string(),
+            "-".to_string(),
+            "LAST!".to_string()]
+        );
+
+        let version = Ops::new()
+                .short("v")
+                .long("version");
+        let xms = Ops::new()
+                .short("Xms")
+                .long("version");
+        
+        app.add_ops(version);
+        app.add_ops(xms);
         app
     }
 
     #[test]
     fn has_ops() {
-        let app = setup();
+        let mut app = setup();
+        app.parse();
         assert!(app.has_ops("v"));
     }
 
 
     #[test]
     fn get_value() {
-        let app = setup();
+        let mut app = setup();
+        app.parse();
         assert_eq!(app.get_value("Xms"), Some("4096".to_string()));
+        assert_eq!(app.get_value("version"), None);
     }
 
     #[test]
-    fn ver() {
+    fn take_args() {
         let mut app = App::new();
         app.parse();
        assert!(!app.take_args());
     }
+
+    // fn next_args() {
+    //     let app = setup();
+    //     app.parse();
+    //     let arg = app.next_arg("");
+    // }
 
 }

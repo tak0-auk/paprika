@@ -13,7 +13,7 @@ You should use Clap instead of PAPRIKA.
 paprika = "*"
 ```
 
-```Rust
+```rust
 extern crate paprika;
 
 use paprika::{App, Ops};
@@ -37,6 +37,7 @@ fn main() {
 
 }
 ```
+
 ```
 cargo run --example example -- -v
 ```
