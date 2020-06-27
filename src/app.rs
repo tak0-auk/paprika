@@ -1,4 +1,5 @@
 use std::env;
+use crate::parser::*;
 
 #[derive(Default)]
 pub struct App {
@@ -36,7 +37,6 @@ impl App {
     }
 
 
-///Add necessary options
     pub fn add_ops(&mut self, ops: Ops) {
         self.ops.push(ops);
     }
@@ -84,7 +84,6 @@ impl App {
 impl App {
 
     fn matcher(&mut self, arguments: Vec<String>) -> Vec<Arg> {
-        self.check_ops();
         let mut args: Vec<Arg> = vec![];
         for (i, arg) in arguments.iter().enumerate() {
 
@@ -100,11 +99,7 @@ impl App {
                 continue;
             }
 
-            let foo = if arg.starts_with("--") {
-                arg[2..].to_string()
-            } else if arg.starts_with() {
-                arg[1..].to_string()
-            };
+            let foo = trim_prefix(arg).to_string();
 
             let n = if let Some(p) = self.ops.iter().position(|o| o.is_myself(&foo)) {
                 Arg {
@@ -129,14 +124,13 @@ impl App {
         args
     }
 
-    fn check_ops(&self) {
-        for ops in self.ops.iter() {
-            
-        }
-    }
-
     fn extract_value(&self, arg: String) -> Option<String> {
-        None
+        let (_, val) = sprit_value(&arg);
+        match val {
+            Some(v) => Some(v.to_string()),
+            None => None
+        }
+        
     }
 
     fn find_args(&self, s: String) -> Option<&Arg> {
@@ -200,9 +194,13 @@ mod test {
         let xms = Ops::new()
                 .short("Xms")
                 .long("version");
+        let file = Ops::new()
+                .long("FILE")
+                .takes_value(true);
         
         app.add_ops(version);
         app.add_ops(xms);
+        app.add_ops(file);
         app
     }
 
@@ -210,7 +208,7 @@ mod test {
     fn has_ops() {
         let mut app = setup();
         app.parse();
-        assert!(app.has_ops("v"));
+        assert_eq!(true, app.has_ops("version"));
     }
 
 
@@ -218,7 +216,8 @@ mod test {
     fn get_value() {
         let mut app = setup();
         app.parse();
-        assert_eq!(app.get_value("Xms"), Some("4096".to_string()));
+        // assert_eq!(app.get_value("Xms"), Some("4096".to_string()));
+        assert_eq!(app.get_value("FILE"), Some("example.txt".to_string()));
         assert_eq!(app.get_value("version"), None);
     }
 
@@ -226,7 +225,7 @@ mod test {
     fn take_args() {
         let mut app = App::new();
         app.parse();
-       assert!(!app.take_args());
+        assert!(!app.take_args());
     }
 
     // fn next_args() {
