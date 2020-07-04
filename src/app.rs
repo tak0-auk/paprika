@@ -1,26 +1,18 @@
 use std::env;
 use crate::parser::*;
+use crate::ops::Ops;
 
 #[derive(Default)]
 pub struct App {
     app_path: String,
     args: Vec<Arg>,
     ops: Vec<Ops>,
-    about: String,
-}
-
-#[derive(Default)]
-pub struct Ops {
-    short: String,
-    long: String,
-    takes_value: bool,
-    conjunction: Option<char>,
 }
 
 #[derive(Default)]
 pub struct Arg {
-    raw:    String,
-    pos:    usize,
+    // raw:    String,
+    // pos:    usize,
     ops:    Option<Ops>,
     value:  Option<String>,
 }
@@ -32,7 +24,6 @@ impl App {
             app_path: String::default(),
             args: vec![],
             ops: vec![],
-            about: String::default()
         }
     }
 
@@ -50,70 +41,76 @@ impl App {
     pub fn has_ops(&self, s: &str) -> bool {
         self.args.iter().any(|arg| 
             match &arg.ops {
-                Some(o) => o.short == s || o.long == s,
+                Some(o) => o.is_myself(s),
                 None => false,
             }
         )
     }
 
     pub fn take_args(&self) -> bool {
-        self.args.len() >= 1
+        !self.args.is_empty()
     }
 
     pub fn get_value(&self, ops: &str) -> Option<String> {
-        match self.find_args(ops.to_string()) {
+        match self.find_args(ops) {
             Some(a) => a.value.clone(),
             None => None,
         }
     }
 
-    pub fn print(&self) {
-        println!("{}", self.about);
-        for o in &self.ops {
-            print!("\t");
-            if !o.short.is_empty() {
-                print!("-{} ", o.short);
-            }
-            if !o.long.is_empty() {
-                print!("--{}", o.long);
-            }
-        }
-    }
+    // pub fn print(&self) {
+    //     println!("{}", self.about);
+    //     for o in &self.ops {
+    //         print!("\t");
+    //         if !o.short.is_empty() {
+    //             print!("-{} ", o.short);
+    //         }
+    //         if !o.long.is_empty() {
+    //             print!("--{}", o.long);
+    //         }
+    //     }
+    // }
 }
 
 impl App {
 
     fn matcher(&mut self, arguments: Vec<String>) -> Vec<Arg> {
         let mut args: Vec<Arg> = vec![];
-        for (i, arg) in arguments.iter().enumerate() {
+        for (_i, arg) in arguments.iter().enumerate() {
 
-            if arg == "-" || arg == "--" {
+            if !start_with_prefix(arg) {
                 args.push(
                     Arg {
-                        raw: arg.to_string(),
-                        pos: i,
+                        // raw: arg.to_string(),
+                        // pos: i,
                         ops: None,
                         value: None,
                     }
                 );
-                continue;
-            }
+                continue
+            };
 
-            let foo = trim_prefix(arg).to_string();
+            let trimed = trim_prefix(arg).to_string();
 
-            let n = if let Some(p) = self.ops.iter().position(|o| o.is_myself(&foo)) {
-                Arg {
-                    raw: arg.to_string(),
-                    pos: i,
-                    ops: Some(self.ops.remove(p)),
-                    value: self.extract_value(foo),
+            let po = self.ops.iter().position(|o| o.is_myself(&trimed));
+            let n = match po {
+                Some(p) => {
+                    println!("Some");
+                    Arg {
+                        // raw: arg.to_string(),
+                        // pos: i,
+                        ops: Some(self.ops.remove(p)),
+                        value: self.extract_value(trimed),
+                    }
                 }
-            } else {
-                Arg {
-                    raw: arg.to_string(),
-                    pos: i,
-                    ops: None,
-                    value: None
+                None => {
+                    println!("None");
+                    Arg {
+                        // raw: arg.to_string(),
+                        // pos: i,
+                        ops: None,
+                        value: None
+                    }
                 }
             };
 
@@ -133,44 +130,16 @@ impl App {
         
     }
 
-    fn find_args(&self, s: String) -> Option<&Arg> {
-        self.args.iter().find(|&arg| match &arg.ops {
-            Some(o) => o.short == s || o.long == s,
-            None => false
+    fn find_args(&self, s: &str) -> Option<&Arg> {
+        self.args.iter().find(|&arg| 
+            match &arg.ops {
+                Some(o) => o.is_myself(s),
+                None => false
         })
     }
 }
 
-impl Ops {
-    pub fn new() -> Ops {
-        Ops{
-            short: String::default(),
-            long: String::default(),
-            takes_value: false,
-            conjunction: Some('='),
-        }
-    }
 
-    pub fn short(mut self, s: &str) -> Self {
-        self.short = s.to_string();
-        self
-    }
-
-    pub fn long(mut self, l: &str) -> Self {
-        self.long = l.to_string();
-        self
-    }
-
-    pub fn takes_value(mut self, is_takes: bool) -> Self {
-        self.takes_value = is_takes;
-        self
-    }
-
-    fn is_myself(&self, s: &str) -> bool {
-        true
-    }
-
-}
 
 
 #[cfg(test)]
@@ -209,6 +178,7 @@ mod test {
         let mut app = setup();
         app.parse();
         assert_eq!(true, app.has_ops("version"));
+        assert!(app.has_ops("help"));
     }
 
 
