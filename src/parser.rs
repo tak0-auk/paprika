@@ -1,11 +1,17 @@
-pub fn parse(arg: &str) {
-
-    let a = trim_prefix(arg);
-}
 
 pub fn start_with_prefix(s: &str) -> bool {
-    let c = s.chars().next().unwrap();
-    c == '-'
+    let is_short = match s.chars().next() {
+        Some(c) => c == '-',
+        None => false
+    };
+    if !is_short {
+        return false
+    }
+    let is_long = match s.chars().next() {
+        Some(c) => c == '-',
+        None => return false
+    };
+    is_short || is_long
 }
 
 pub fn trim_prefix(s: &str) -> &str {
@@ -25,7 +31,7 @@ pub fn sprit_value(arg: &str) -> (&str, Option<&str>) {
     match arg.find('=') {
         Some(p) => {
             let (f, s) = arg.split_at(p);
-            return (f, Some(&s[1..]))
+            (f, Some(&s[1..]))
         },
         None => (arg, None)
     }

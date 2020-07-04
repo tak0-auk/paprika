@@ -95,7 +95,6 @@ impl App {
             let po = self.ops.iter().position(|o| o.is_myself(&trimed));
             let n = match po {
                 Some(p) => {
-                    println!("Some");
                     Arg {
                         // raw: arg.to_string(),
                         // pos: i,
@@ -104,7 +103,6 @@ impl App {
                     }
                 }
                 None => {
-                    println!("None");
                     Arg {
                         // raw: arg.to_string(),
                         // pos: i,
@@ -149,14 +147,6 @@ mod test {
 
     fn setup() -> App {
         let mut app = App::new();
-        app.matcher(vec![
-            "-v".to_string(),
-            "-Xms4096".to_string(),
-            "--FILE=example.txt".to_string(),
-            "-".to_string(),
-            "LAST!".to_string()]
-        );
-
         let version = Ops::new()
                 .short("v")
                 .long("version");
@@ -170,13 +160,25 @@ mod test {
         app.add_ops(version);
         app.add_ops(xms);
         app.add_ops(file);
+
+        //////////////////////////////////////////////////
+        ////////////////////////////////////////////////// 
+        let arguments: Vec<String> = vec![
+            "-v".to_string(),
+            "-Xms4096".to_string(),
+            "--FILE=example.txt".to_string(),
+            "-".to_string(),
+            "LAST!".to_string()];
+        app.app_path = arguments[0].clone();
+        app.args = app.matcher(arguments[1..].to_vec());
+        //////////////////////////////////////////////////
+        //////////////////////////////////////////////////
         app
     }
 
     #[test]
     fn has_ops() {
-        let mut app = setup();
-        app.parse();
+        let app = setup();
         assert_eq!(true, app.has_ops("version"));
         assert!(app.has_ops("help"));
     }
@@ -184,8 +186,7 @@ mod test {
 
     #[test]
     fn get_value() {
-        let mut app = setup();
-        app.parse();
+        let app = setup();
         // assert_eq!(app.get_value("Xms"), Some("4096".to_string()));
         assert_eq!(app.get_value("FILE"), Some("example.txt".to_string()));
         assert_eq!(app.get_value("version"), None);
@@ -193,8 +194,7 @@ mod test {
 
     #[test]
     fn take_args() {
-        let mut app = App::new();
-        app.parse();
+        let app = App::new();
         assert!(!app.take_args());
     }
 

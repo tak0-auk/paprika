@@ -44,7 +44,6 @@ impl Ops {
         } else {
             false
         };
-        
         is_short || is_long
     }
 
@@ -57,7 +56,7 @@ mod test {
 
     #[test]
     fn test_is_myself() {
-        let mut ops = Ops::new().short("h");
+        let ops = Ops::new().short("h");
         assert!(ops.is_myself("h"));
     }
 }
